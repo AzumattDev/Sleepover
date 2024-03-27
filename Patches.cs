@@ -58,49 +58,24 @@ static class BedGetHoverTextPatch
             return true;
         }
 
-        string sleepHover = "[<color=yellow><b>$KEY_Use</b></color>] $piece_bed_sleep\n";
-        string claimHover = "[<color=yellow><b>shift + $KEY_Use</b></color>] $piece_bed_claim\n";
-        string setSpawnHover = "[<color=yellow><b>alt + $KEY_Use</b></color>] $piece_bed_setspawn\n";
-        bool maySleep;
-        bool mayClaim;
-        bool maySetSpawn;
         string ownerName = __instance.GetOwnerName();
         string ownerText = ownerName + "'s $piece_bed\n";
 
-        // Sleep rules
-        maySleep = (
-            (__instance.IsMine() && __instance.IsCurrent()) || // Default - it's my claimed spawn bed
-            ((!__instance.IsMine() && ownerName != "" && SleepoverPlugin.EnableMultipleBedfellows.Value == SleepoverPlugin.Toggle.On)) || // Many sleepers
-            (ownerName == "" && SleepoverPlugin.SleepWithoutClaiming.Value == SleepoverPlugin.Toggle.On) || // Ignore claim rules
-            (!__instance.IsCurrent() && SleepoverPlugin.SleepWithoutSpawnpoint.Value == SleepoverPlugin.Toggle.On) // Ignore spawn rules
-        );
-
-        // Claim rules
-        mayClaim = (
-            (ownerName == "")
-        );
-
-        // Set spawn rules
-        maySetSpawn = (
-            (!__instance.IsCurrent() && __instance.IsMine()) || // Default - it's my bed, but not currently spawn
-            (!__instance.IsCurrent() && (!__instance.IsMine() && SleepoverPlugin.MultipleSpawnpointsPerBed.Value == SleepoverPlugin.Toggle.On)) // Allow multiple spawns
-        );
-
         __result = ownerName != "" ? ownerText : "$piece_bed_unclaimed\n";
 
-        if (maySleep)
+        if (Util.MaySleep(__instance, ownerName))
         {
-            __result += sleepHover;
+            __result += Util.SleepHover;
         }
 
-        if (mayClaim)
+        if (Util.MayClaim(__instance))
         {
-            __result += claimHover;
+            __result += Util.ClaimHover;
         }
 
-        if (maySetSpawn)
+        if (Util.MaySetSpawn(__instance))
         {
-            __result += setSpawnHover;
+            __result += Util.SetSpawnHover;
         }
 
         __result = Localization.instance.Localize(__result);
@@ -124,37 +99,15 @@ static class BedInteractPatch
             return false;
         }
 
-        Player thePlayer = human as Player;
+        Player? thePlayer = human as Player;
         long playerID = Game.instance.GetPlayerProfile().GetPlayerID();
         bool isClaimIntent = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         bool isSetSpawnIntent = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
         bool isSleepIntent = !isClaimIntent && !isSetSpawnIntent;
 
-        bool maySleep;
-        bool mayClaim;
-        bool maySetSpawn;
         string ownerName = __instance.GetOwnerName();
 
-        // Sleep rules
-        maySleep = (
-            (__instance.IsMine() && __instance.IsCurrent()) || // Default - it's my claimed spawn bed
-            ((!__instance.IsMine() && ownerName != "" && SleepoverPlugin.EnableMultipleBedfellows.Value == SleepoverPlugin.Toggle.On)) || // Many sleepers
-            (ownerName == "" && SleepoverPlugin.SleepWithoutClaiming.Value == SleepoverPlugin.Toggle.On) || // Ignore claim rules
-            (!__instance.IsCurrent() && SleepoverPlugin.SleepWithoutSpawnpoint.Value == SleepoverPlugin.Toggle.On) // Ignore spawn rules
-        );
-
-        // Claim rules
-        mayClaim = (
-            (ownerName == "")
-        );
-
-        // Set spawn rules
-        maySetSpawn = (
-            (!__instance.IsCurrent() && __instance.IsMine()) || // Default - it's my bed, but not currently spawn
-            (!__instance.IsCurrent() && (!__instance.IsMine() && SleepoverPlugin.MultipleSpawnpointsPerBed.Value == SleepoverPlugin.Toggle.On)) // Allow multiple spawns
-        );
-
-        if (isClaimIntent && mayClaim)
+        if (isClaimIntent && Util.MayClaim(__instance))
         {
             if (!__instance.CheckExposure(thePlayer))
             {
@@ -165,7 +118,7 @@ static class BedInteractPatch
             __instance.SetOwner(playerID, Game.instance.GetPlayerProfile().GetName());
         }
 
-        if (isSetSpawnIntent && maySetSpawn)
+        if (isSetSpawnIntent && Util.MaySetSpawn(__instance))
         {
             if (!__instance.CheckExposure(thePlayer))
             {
@@ -180,7 +133,7 @@ static class BedInteractPatch
         }
 
         // Triggering "sleep" hover actions
-        if (isSleepIntent && maySleep)
+        if (isSleepIntent && Util.MaySleep(__instance, ownerName))
         {
             if (SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.Off && !EnvMan.instance.IsAfternoon() && !EnvMan.instance.IsNight())
             {
@@ -242,13 +195,9 @@ static class BedCheckExposurePatch
 {
     static bool Prefix(ref bool __result)
     {
-        if (SleepoverPlugin.IgnoreExposure.Value == SleepoverPlugin.Toggle.On)
-        {
-            __result = true;
-            return false;
-        }
-
-        return true;
+        if (SleepoverPlugin.IgnoreExposure.Value != SleepoverPlugin.Toggle.On) return true;
+        __result = true;
+        return false;
     }
 }
 
@@ -257,13 +206,9 @@ static class BedCheckEnemiesPatch
 {
     static bool Prefix(ref bool __result)
     {
-        if (SleepoverPlugin.IgnoreEnemies.Value == SleepoverPlugin.Toggle.On)
-        {
-            __result = true;
-            return false;
-        }
-
-        return true;
+        if (SleepoverPlugin.IgnoreEnemies.Value != SleepoverPlugin.Toggle.On) return true;
+        __result = true;
+        return false;
     }
 }
 
@@ -272,13 +217,9 @@ static class BedCheckFirePatch
 {
     static bool Prefix(ref bool __result)
     {
-        if (SleepoverPlugin.IgnoreFire.Value == SleepoverPlugin.Toggle.On)
-        {
-            __result = true;
-            return false;
-        }
-
-        return true;
+        if (SleepoverPlugin.IgnoreFire.Value != SleepoverPlugin.Toggle.On) return true;
+        __result = true;
+        return false;
     }
 }
 
@@ -287,12 +228,8 @@ static class BedCheckWetPatch
 {
     static bool Prefix(ref bool __result)
     {
-        if (SleepoverPlugin.IgnoreWet.Value == SleepoverPlugin.Toggle.On)
-        {
-            __result = true;
-            return false;
-        }
-
-        return true;
+        if (SleepoverPlugin.IgnoreWet.Value != SleepoverPlugin.Toggle.On) return true;
+        __result = true;
+        return false;
     }
 }
