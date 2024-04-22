@@ -35,7 +35,7 @@ static class GameUpdateSleepingPatch
         }
         else if (
             !EnvMan.instance.IsTimeSkipping() &&
-            ((EnvMan.instance.IsAfternoon() || EnvMan.instance.IsNight()) || SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.On) &&
+            ((EnvMan.IsAfternoon() || EnvMan.IsNight()) || SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.On) &&
             __instance.EverybodyIsTryingToSleep()
         )
         {
@@ -135,7 +135,7 @@ static class BedInteractPatch
         // Triggering "sleep" hover actions
         if (isSleepIntent && Util.MaySleep(__instance, ownerName))
         {
-            if (SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.Off && !EnvMan.instance.IsAfternoon() && !EnvMan.instance.IsNight())
+            if (SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.Off && !EnvMan.IsAfternoon() && !EnvMan.IsNight())
             {
                 human.Message(MessageHud.MessageType.Center, "$msg_cantsleep", 0, null);
                 __result = false;
