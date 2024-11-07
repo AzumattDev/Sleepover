@@ -1,5 +1,6 @@
 | `Version` | `Update Notes`                                                                                                                                                         |
 |-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.1.4     | - Update for Bog Witch. (no code changes, just a courtesy update)                                                                                                      |
 | 1.1.3     | - Update for Ashlands.                                                                                                                                                 |
 | 1.1.2     | - Initial Release (continue from 1.1.1 of kinghfb's version. It was MIT and someone wanted it updated, happy to have someone other than me take this over permanently) |
 

@@ -33,10 +33,7 @@ static class GameUpdateSleepingPatch
                 return false;
             }
         }
-        else if (
-            !EnvMan.instance.IsTimeSkipping() &&
-            ((EnvMan.IsAfternoon() || EnvMan.IsNight()) || SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.On) &&
-            __instance.EverybodyIsTryingToSleep()
+        else if (!EnvMan.instance.IsTimeSkipping() && ((EnvMan.IsAfternoon() || EnvMan.IsNight()) || SleepoverPlugin.SleepAnyTime.Value == SleepoverPlugin.Toggle.On) && __instance.EverybodyIsTryingToSleep()
         )
         {
             EnvMan.instance.SkipToMorning();
